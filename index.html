@@ -1,0 +1,246 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Interactivo de Proyectos en Costa Rica</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 500px; width: 100%; } /* Altura fija para compatibilidad con Google Sites */
+        #controls { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            z-index: 1000; 
+            background: white; 
+            padding: 10px; 
+            border-radius: 5px; 
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        select { 
+            padding: 5px; 
+            font-size: 16px; 
+            width: 200px; 
+            margin-bottom: 5px; 
+            display: block; /* Para mejor alineación en móviles */
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <select id="categoryFilter" onchange="updateProductFilter()">
+            <option value="all">Todas las categorías</option>
+        </select>
+        <select id="productFilter" onchange="filterMarkers()">
+            <option value="all">Todos los productos</option>
+        </select>
+    </div>
+    <div id="map"></div>
+    <script>
+        // Esperar a que el DOM esté listo antes de inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            var map = L.map('map').setView([9.9281, -84.0907], 8);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            var projects = [
+                {
+                    category: "Agrícola",
+                    name: "Productos D´Fresa",
+                    product: "Fresa",
+                    characteristics: "Fresa fresca y congelada",
+                    availability: "Todo el año",
+                    phone: "8707-9642",
+                    email: "No incluido",
+                    deliveries: "A cantones vecinos",
+                    others: "No incluido",
+                    lat: 10.17461859,
+                    lng: -84.15852415
+                },
+                {
+                    category: "Agrícola",
+                    name: "ASODUCKUA",
+                    product: "Plátano",
+                    characteristics: "No incluido",
+                    availability: "Todo el año",
+                    phone: "8773-9008",
+                    email: "No incluido",
+                    deliveries: "Dentro del cantón",
+                    others: "Asociación de personas indígenas",
+                    lat: 9.626096579,
+                    lng: -82.87477416
+                },
+                {
+                    category: "Agrícola",
+                    name: "ASODUCKUA",
+                    product: "Cacao",
+                    characteristics: "No incluido",
+                    availability: "Todo el año",
+                    phone: "8773-9008",
+                    email: "No incluido",
+                    deliveries: "Dentro del cantón",
+                    others: "Asociación de personas indígenas",
+                    lat: 9.626096579,
+                    lng: -82.87477416
+                },
+                {
+                    category: "Acuícola",
+                    name: "ASODUCKUA",
+                    product: "Pescado",
+                    characteristics: "Tilapia",
+                    availability: "Todo el año",
+                    phone: "8773-9008",
+                    email: "No incluido",
+                    deliveries: "Dentro del cantón",
+                    others: "Asociación de personas indígenas",
+                    lat: 9.626096579,
+                    lng: -82.87477416
+                },
+                {
+                    category: "Procesado",
+                    name: "Entre Aromas",
+                    product: "Varios",
+                    characteristics: "No incluido",
+                    availability: "Todo el año",
+                    phone: "8317-5759",
+                    email: "No incluido",
+                    deliveries: "A cantones vecinos",
+                    others: "Proyecto con Bandera Azul Ecológica",
+                    lat: 10.53625097,
+                    lng: -85.25530138
+                },
+                {
+                    category: "Agrícola",
+                    name: "Finca agrícola",
+                    product: "Papa",
+                    characteristics: "No aportados",
+                    availability: "Todo el año",
+                    phone: "8881-7544",
+                    email: "No incluido",
+                    deliveries: "Dentro del cantón",
+                    others: "No incluido",
+                    lat: 9.916927899,
+                    lng: -83.89214605
+                },
+                {
+                    category: "Agrícola",
+                    name: "Finca agrícola",
+                    product: "Cebolla",
+                    characteristics: "No aportados",
+                    availability: "Todo el año",
+                    phone: "8881-7544",
+                    email: "No incluido",
+                    deliveries: "Dentro del cantón",
+                    others: "No incluido",
+                    lat: 9.916927899,
+                    lng: -83.89214605
+                },
+                {
+                    category: "Agrícola",
+                    name: "Finca agrícola",
+                    product: "Zanahoria",
+                    characteristics: "No aportados",
+                    availability: "Todo el año",
+                    phone: "8881-7544",
+                    email: "No incluido",
+                    deliveries: "Dentro del cantón",
+                    others: "No incluido",
+                    lat: 9.916927899,
+                    lng: -83.89214605
+                },
+                {
+                    category: "Agrícola",
+                    name: "Agricarrots Produce and Trading Company S.A.",
+                    product: "Papa",
+                    characteristics: "Producto lavado. Diversas calidades",
+                    availability: "Todo el año",
+                    phone: "7122-7486",
+                    email: "juanjoramirez1994@gmail.com",
+                    deliveries: "Donde se requiera",
+                    others: "Proyecto con Buenas Prácticas Agrícolas y de Manufactura",
+                    lat: 9.887036196,
+                    lng: -83.87008008
+                },
+                {
+                    category: "Agrícola",
+                    name: "Agricarrots Produce and Trading Company S.A.",
+                    product: "Zanahoria",
+                    characteristics: "Producto lavado. Diversas calidades hasta mínimamente procesado para industria",
+                    availability: "Todo el año",
+                    phone: "7122-7486",
+                    email: "juanjoramirez1994@gmail.com",
+                    deliveries: "Donde se requiera",
+                    others: "Proyecto con Buenas Prácticas Agrícolas y de Manufactura",
+                    lat: 9.887036196,
+                    lng: -83.87008008
+                }
+            ];
+
+            var uniqueCategories = [...new Set(projects.map(project => project.category))].sort();
+            var categorySelect = document.getElementById('categoryFilter');
+            uniqueCategories.forEach(category => {
+                var option = document.createElement('option');
+                option.value = category;
+                option.text = category;
+                categorySelect.appendChild(option);
+            });
+
+            var productSelect = document.getElementById('productFilter');
+            var markersLayer = L.layerGroup().addTo(map);
+
+            function updateProductFilter() {
+                var selectedCategory = categorySelect.value;
+                productSelect.innerHTML = '<option value="all">Todos los productos</option>';
+                var filteredProducts = [...new Set(
+                    projects
+                        .filter(project => selectedCategory === 'all' || project.category === selectedCategory)
+                        .map(project => project.product)
+                )].sort();
+                filteredProducts.forEach(product => {
+                    var option = document.createElement('option');
+                    option.value = product;
+                    option.text = product;
+                    productSelect.appendChild(option);
+                });
+                filterMarkers();
+            }
+
+            function filterMarkers() {
+                var selectedCategory = categorySelect.value;
+                var selectedProduct = productSelect.value;
+                markersLayer.clearLayers();
+                projects.forEach(function(project) {
+                    if (
+                        (selectedCategory === 'all' || project.category === selectedCategory) &&
+                        (selectedProduct === 'all' || project.product === selectedProduct)
+                    ) {
+                        var marker = L.marker([project.lat, project.lng]).addTo(markersLayer);
+                        marker.bindPopup(
+                            '<b>' + project.name + '</b><br>' +
+                            'Categoría: ' + project.category + '<br>' +
+                            'Producto: ' + project.product + '<br>' +
+                            'Características: ' + project.characteristics + '<br>' +
+                            'Disponibilidad: ' + project.availability + '<br>' +
+                            'Teléfono: ' + project.phone + '<br>' +
+                            'Correo: ' + project.email + '<br>' +
+                            'Entregas: ' + project.deliveries + '<br>' +
+                            'Otros detalles: ' + project.others
+                        );
+                    }
+                });
+                // Refrescar el mapa para que se redimensione correctamente
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 100);
+            }
+
+            updateProductFilter();
+            filterMarkers();
+            // Refrescar inicial para asegurar carga
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 200);
+        });
+    </script>
+</body>
