@@ -1,9 +1,13 @@
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa Interactivo de Proyectos en Costa Rica</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Cargar fuente Montserrat desde Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; padding: 0; }
         #map { height: 500px; width: 100%; } /* Altura fija para compatibilidad con Google Sites */
@@ -24,6 +28,25 @@
             margin-bottom: 5px; 
             display: block; /* Para mejor alineación en móviles */
         }
+        .leaflet-popup-content {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .leaflet-popup-content b {
+            font-weight: 700; /* Negrita con Montserrat */
+        }
+        .leaflet-popup-content .project-name {
+            margin-bottom: 10px; /* Separación leve después del name */
+        }
+        .leaflet-popup-content ul {
+            margin-top: 5px; /* Separación leve entre name y la lista */
+            padding-left: 20px; /* Ajuste para viñetas */
+            list-style-type: disc; /* Viñetas estándar */
+        }
+        .leaflet-popup-content ul li {
+            margin-bottom: 5px; /* Separación leve entre ítems de la lista */
+        }
     </style>
 </head>
 <body>
@@ -39,10 +62,53 @@
     <script>
         // Esperar a que el DOM esté listo antes de inicializar
         document.addEventListener('DOMContentLoaded', function() {
-            var map = L.map('map').setView([9.9281, -84.0907], 8);
+            var map = L.map('map', {
+                zoomControl: false // Desactivar control de zoom por defecto
+            }).setView([9.9281, -84.0907], 8);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
+
+            // Mover el control de zoom a la esquina inferior derecha
+            L.control.zoom({
+                position: 'bottomright'
+            }).addTo(map);
+
+            // Definir íconos personalizados con colores sutiles por categoría
+            var icons = {
+                'Agrícola': L.icon({
+                    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [0, -41],
+                    shadowSize: [41, 41]
+                }),
+                'Ganadería': L.icon({
+                    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-brown.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [0, -41],
+                    shadowSize: [41, 41]
+                }),
+                'Acuícola': L.icon({
+                    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [0, -41],
+                    shadowSize: [41, 41]
+                }),
+                'Procesado': L.icon({
+                    iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [0, -41],
+                    shadowSize: [41, 41]
+                })
+            };
 
             var projects = [
                 {
@@ -189,7 +255,8 @@
             var productSelect = document.getElementById('productFilter');
             var markersLayer = L.layerGroup().addTo(map);
 
-            function updateProductFilter() {
+            window.updateProductFilter = function() {
+                console.log("updateProductFilter called");
                 var selectedCategory = categorySelect.value;
                 productSelect.innerHTML = '<option value="all">Todos los productos</option>';
                 var filteredProducts = [...new Set(
@@ -204,9 +271,11 @@
                     productSelect.appendChild(option);
                 });
                 filterMarkers();
-            }
+                console.log("Products updated, filtering markers");
+            };
 
-            function filterMarkers() {
+            window.filterMarkers = function() {
+                console.log("filterMarkers called");
                 var selectedCategory = categorySelect.value;
                 var selectedProduct = productSelect.value;
                 markersLayer.clearLayers();
@@ -215,32 +284,41 @@
                         (selectedCategory === 'all' || project.category === selectedCategory) &&
                         (selectedProduct === 'all' || project.product === selectedProduct)
                     ) {
-                        var marker = L.marker([project.lat, project.lng]).addTo(markersLayer);
+                        var icon = icons[project.category] || L.icon({
+                            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [0, -41],
+                            shadowSize: [41, 41]
+                        });
+                        var marker = L.marker([project.lat, project.lng], { icon: icon }).addTo(markersLayer);
                         marker.bindPopup(
-                            '<b>' + project.name + '</b><br>' +
-                            'Categoría: ' + project.category + '<br>' +
-                            'Producto: ' + project.product + '<br>' +
-                            'Características: ' + project.characteristics + '<br>' +
-                            'Disponibilidad: ' + project.availability + '<br>' +
-                            'Teléfono: ' + project.phone + '<br>' +
-                            'Correo: ' + project.email + '<br>' +
-                            'Entregas: ' + project.deliveries + '<br>' +
-                            'Otros detalles: ' + project.others
+                            '<div class="project-name"><b>' + project.name + '</b></div>' +
+                            '<ul>' +
+                                '<li><b>Producto:</b> ' + project.product + '</li>' +
+                                '<li><b>Características:</b> ' + project.characteristics + '</li>' +
+                                '<li><b>Disponibilidad:</b> ' + project.availability + '</li>' +
+                                '<li><b>Teléfono:</b> ' + project.phone + '</li>' +
+                                '<li><b>Correo:</b> ' + project.email + '</li>' +
+                                '<li><b>Entregas:</b> ' + project.deliveries + '</li>' +
+                                '<li><b>Otros detalles:</b> ' + project.others + '</li>' +
+                            '</ul>'
                         );
                     }
                 });
-                // Refrescar el mapa para que se redimensione correctamente
+                console.log("Markers filtered with category:", selectedCategory, "and product:", selectedProduct);
                 setTimeout(function() {
                     map.invalidateSize();
                 }, 100);
-            }
+            };
 
             updateProductFilter();
             filterMarkers();
-            // Refrescar inicial para asegurar carga
             setTimeout(function() {
                 map.invalidateSize();
             }, 200);
         });
     </script>
 </body>
+</html>
